@@ -16,7 +16,10 @@ router.post("/", async (req, res) => {
     res.status(500).json({ error: "Internal  server error" });
   }
 });
-router.get("/", async (req, res) => {
+
+
+
+router.get("/",async (req, res) => {
   try {
     const data = await MenuItem.find();
     res.status(200).json(data);
