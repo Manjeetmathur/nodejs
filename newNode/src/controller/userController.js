@@ -245,7 +245,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName, email } = req.body;
+  const { fullName, email,userName } = req.body;
 
   if (!fullName || !email) {
     throw new ApiError(400, "All fields are required");
@@ -257,6 +257,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       $set: {
         fullName,
         email,
+        userName
       },
     },
     { new: true }
@@ -325,10 +326,8 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
-  const { userName } = req.params;
-  console.log("userName : ",userName);
-  
-  if (!userName) {
+  const { userName } = req.body;
+  if (!userName?.trim()) {
     throw new ApiError(401, "username is missing...");
   }
 
@@ -351,16 +350,39 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         from: "subscriptions",
         localField: "_id",
         foreignField: "subscriber",
-        as: "subscribeTo",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $lookup: {
+        from: "tweets",
+        localField: "_id",
+        foreignField: "owner",
+        as: "tweet",
       },
     },
     {
       $addFields: {
         subscriberCount: {
-          $size: "$subscribers",
+          $size:"$subscribers"
+          // {
+          //   $ifNull : ["$subscribers",[]]
+
+          // },
         },
         channelSubscribedToCount: {
-          $size: "$subscribeto",
+          $size: "$subscribedTo" 
+          // {
+          //   $ifNull : [,[]]
+
+          // },
+        },
+        tweets: {
+          $size: "$tweet" 
+          // {
+          //   $ifNull : [,[]]
+
+          // },
         },
         isSubscribed: {
           $cond: {
@@ -371,12 +393,14 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
       },
     },
+    
     {
       $project: {
         fullName: 1,
         userName: 1,
         subscriberCount: 1,
         channelSubscribedToCount: 1,
+        tweets : 1,
         isSubscribed: 1,
         coverImage: 1,
         avatar: 1,
@@ -384,7 +408,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
       },
     },
   ]);
-
   if (!channel?.length) {
     throw new ApiError(404, "channel does not exist...");
   }
@@ -392,7 +415,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiResponse(200, channel[10], "user channel fetched successfully")
+      new ApiResponse(200, {channel}, "user channel fetched successfully")
     );
 });
 

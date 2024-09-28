@@ -54,6 +54,6 @@ router
 
 router.route("/watch-history").get(verifyJWT, getWatchHistory);
 
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
+router.route("/get-user-channel-profile").get(verifyJWT, getUserChannelProfile);
 
 export default router;
